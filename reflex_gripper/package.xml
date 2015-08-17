@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+	<name>reflex_gripper</name>
+	<version>1.0.0</version>
+	<description>Main command code for the Reflex hands</description>
+	<maintainer email="grebeg@rpi.edu">Gregory Grebe</maintainer>
+	<url type="repository">http://github.com/rpiRobotics/reflex-gripper-ros-pkg</url>
+
+	<buildtool_depend>catkin</buildtool_depend>
+	<build_depend>reflex_gripper_msgs</build_depend>
+	<build_depend>rospy</build_depend>
+	<build_depend>roscpp</build_depend>
+	<build_depend>tf</build_depend>
+
+	<run_depend>reflex_gripper_msgs</run_depend>
+	<run_depend>rospy</run_depend>
+	<run_depend>roscpp</run_depend>
+	<run_depend>tf</run_depend>
+</package>

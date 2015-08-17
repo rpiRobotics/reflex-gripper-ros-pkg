@@ -1,0 +1,13 @@
+<!-- -*- mode: XML -*- -->
+
+<launch> 
+	<arg name="Name" default="hand"/>
+    <arg name="Port" default="/dev/ttyUSB0"/>
+
+	 <include file="$(find reflex_gripper)/launch/motors.launch">
+        <arg name="Name" value="$(arg Name)"/>
+        <arg name="Port" value="$(arg Port)" />
+    </include>
+
+     <node name="reflex_$(arg Name)" pkg="reflex_gripper" type="reflex_sf_hand.py" required="true" output="screen"/>
+</launch>

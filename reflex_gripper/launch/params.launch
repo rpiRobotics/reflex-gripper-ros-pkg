@@ -1,0 +1,80 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <arg name="Name"/>
+    <rosparam subst_value="true">
+        reflex_$(arg Name)_f1:
+            max_motor_travel: 3.75
+            controller:
+                package: dynamixel_controllers
+                module: joint_position_controller
+                type: JointPositionController
+            joint_name: reflex_$(arg Name)_f1
+            motor_to_joint_inverted: False
+            motor_to_joint_gear_ratio: 1.42
+            default_motor_speed: 4.5
+            max_motor_speed: 6.0
+            overload_threshold: 0.25
+            motor:
+                id: 1
+                init: 0
+                min: 0
+                max: 28672
+
+        reflex_$(arg Name)_f2:
+            max_motor_travel: 3.75
+            controller:
+                package: dynamixel_controllers
+                module: joint_position_controller
+                type: JointPositionController
+            joint_name: reflex_$(arg Name)_f2
+            motor_to_joint_inverted: True
+            motor_to_joint_gear_ratio: 1.42
+            default_motor_speed: 4.5
+            max_motor_speed: 6.0
+            overload_threshold: 0.25
+            motor:
+                id: 2
+                init: 0
+                min: 0
+                max: 28672
+
+        reflex_$(arg Name)_f3:
+            max_motor_travel: 3.75
+            controller:
+                package: dynamixel_controllers
+                module: joint_position_controller
+                type: JointPositionController
+            joint_name: reflex_$(arg Name)_f3
+            motor_to_joint_inverted: False
+            motor_to_joint_gear_ratio: 1.42
+            default_motor_speed: 4.5
+            max_motor_speed: 6.0
+            overload_threshold: 0.25
+            motor:
+                id: 3
+                init: 0
+                min: 0
+                max: 28672
+
+        reflex_$(arg Name)_preshape:
+            max_motor_travel: 1.75
+            controller:
+                package: dynamixel_controllers
+                module: joint_position_controller
+                type: JointPositionController
+            joint_name: reflex_$(arg Name)_preshape
+            motor_to_joint_inverted: True
+            motor_to_joint_gear_ratio: 1.5
+            default_motor_speed: 4.5
+            max_motor_speed: 6.0
+            overload_threshold: 0.55  # preshape threshold is higher due to different gearing
+            motor:
+                id: 4
+                init: 0
+                min: 0
+                max: 28672
+    </rosparam>
+
+    <rosparam file="$(find reflex_gripper)/yaml/reflex_$(arg Name)_zero_points.yaml" command="load" subst_value="true"/>
+</launch>

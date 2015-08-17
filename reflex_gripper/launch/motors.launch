@@ -1,0 +1,37 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <arg name="Name" />
+    <arg name="Port" default="/dev/ttyUSB0"/>
+
+    <!-- Start the dynamixel manager on the given port -->
+    <node name="dynamixel_manager_$(arg Name)" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
+        <rosparam subst_value = "true">
+            namespace: dxl_manager
+            serial_ports:
+                reflex_$(arg Name)_port:
+                    port_name: $(arg Port)
+                    baud_rate: 57142
+                    min_motor_id: 1
+                    max_motor_id: 4
+                    update_rate: 20
+        </rosparam>
+    </node>
+
+    <!--Set all of the necessary params for the hand -->
+    <include file="$(find reflex_gripper)/launch/params.launch">
+        <arg name="Name" value="$(arg Name)"/>
+    </include>
+    
+    <!-- Spawn the controllers for each finger-->
+    <node name="controller_spawner_$(arg Name)" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port $(arg Name)_port 
+                	reflex_$(arg Name)_f1 
+                	reflex_$(arg Name)_f2 
+                	reflex_$(arg Name)_f3 
+                	reflex_$(arg Name)_preshape
+                "
+          output="screen"/>   
+
+</launch>

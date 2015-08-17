@@ -17,7 +17,7 @@ add_message_files(
 	Command.msg
 	PoseCommand.msg
 	VelocityCommand.msg
-	ForceCommmand.msg
+	ForceCommand.msg
 	RawServoCommands.msg
 	RadianServoCommands.msg
 )

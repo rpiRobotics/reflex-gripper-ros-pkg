@@ -1,7 +1,7 @@
 <!-- -*- mode: XML -*- -->
 
 <launch>
-    <arg name="Name" />
+    <arg name="Name" default="hand"/>
     <arg name="Port" default="/dev/ttyUSB0"/>
 
     <!-- Start the dynamixel manager on the given port -->
@@ -9,7 +9,7 @@
         <rosparam subst_value = "true">
             namespace: dxl_manager
             serial_ports:
-                reflex_$(arg Name)_port:
+                $(arg Name)_port:
                     port_name: $(arg Port)
                     baud_rate: 57142
                     min_motor_id: 1

@@ -4,6 +4,7 @@ project(reflex_gripper)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
 	reflex_gripper_msgs
+	dynamixel_controllers
 	rospy
 	roscpp
 	tf

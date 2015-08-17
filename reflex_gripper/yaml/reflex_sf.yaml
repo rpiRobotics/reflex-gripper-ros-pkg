@@ -1,10 +1,10 @@
-gripper_$(arg Name)_f1:
+reflex_sf_f1:
     max_motor_travel: 3.75
     controller:
         package: dynamixel_controllers
         module: joint_position_controller
         type: JointPositionController
-    joint_name: gripper_$(arg Name)_f1
+    joint_name: reflex_sf_f1
     motor_to_joint_inverted: False
     motor_to_joint_gear_ratio: 1.42
     default_motor_speed: 4.5
@@ -16,13 +16,13 @@ gripper_$(arg Name)_f1:
         min: 0
         max: 28672
 
-gripper_$(arg Name)_f2:
+reflex_sf_f2:
     max_motor_travel: 3.75
     controller:
         package: dynamixel_controllers
         module: joint_position_controller
         type: JointPositionController
-    joint_name: gripper_$(arg Name)_f2
+    joint_name: reflex_sf_f2
     motor_to_joint_inverted: True
     motor_to_joint_gear_ratio: 1.42
     default_motor_speed: 4.5
@@ -34,13 +34,13 @@ gripper_$(arg Name)_f2:
         min: 0
         max: 28672
 
-gripper_$(arg Name)_f3:
+reflex_sf_f3:
     max_motor_travel: 3.75
     controller:
         package: dynamixel_controllers
         module: joint_position_controller
         type: JointPositionController
-    joint_name: gripper_$(arg Name)_f3
+    joint_name: reflex_sf_f3
     motor_to_joint_inverted: False
     motor_to_joint_gear_ratio: 1.42
     default_motor_speed: 4.5
@@ -52,13 +52,13 @@ gripper_$(arg Name)_f3:
         min: 0
         max: 28672
 
-gripper_$(arg Name)_preshape:
+reflex_sf_preshape:
     max_motor_travel: 1.75
     controller:
         package: dynamixel_controllers
         module: joint_position_controller
         type: JointPositionController
-    joint_name: gripper_$(arg Name)_preshape
+    joint_name: reflex_sf_preshape
     motor_to_joint_inverted: True
     motor_to_joint_gear_ratio: 1.5
     default_motor_speed: 4.5

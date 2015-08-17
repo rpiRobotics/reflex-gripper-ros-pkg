@@ -36,7 +36,7 @@ import reflex_gripper_msgs.msg as MSG
 
 class ReflexSFHand(ReflexHand):
     def __init__(self,name):
-		self.name = name
+        self.name = name
         super(ReflexSFHand, self).__init__(self.name, ReflexSFMotor)
         self.hand_state_pub = rospy.Publisher(self.namespace + '/hand_state',
                                               MSG.Hand, queue_size=10)
@@ -71,7 +71,7 @@ class ReflexSFHand(ReflexHand):
             motor.enable_torque()
 
     def _publish_hand_state(self):
-        state = reflex_msgs.msg.Hand()
+        state = MSG.Hand()
         motor_names = ('_f1', '_f2', '_f3', '_preshape')
         for i in range(4):
             state.motor[i] = self.motors[self.namespace + motor_names[i]].get_motor_msg()
@@ -107,10 +107,10 @@ motor, or 'q' to indicate that the zero point has been reached\n")
             outfile.write(yaml.dump(data))
 
     def _zero_current_pose(self):
-		keys = [(self.namespace+ '_' + finger) for finger in self.fingerNames]
-		data = { key : dict(
-			zero_point = self.motors[key].get_current_raw_motor_angle() ) 
-			for key in keys}
+        keys = [(self.namespace+ '_' + finger) for finger in self.fingerNames]
+        data = { key : dict(
+            zero_point = self.motors[key].get_current_raw_motor_angle() ) 
+            for key in keys}
         self._write_zero_point_data_to_file(self.namespace + '_zero_points.yaml', data)
 
 

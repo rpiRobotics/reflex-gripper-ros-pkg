@@ -9,5 +9,7 @@
         <arg name="Port" value="$(arg Port)" />
     </include>
 
-     <node name="reflex_$(arg Name)" pkg="reflex_gripper" type="reflex_sf_hand.py" required="true" output="screen"/>
+     <node name="reflex_$(arg Name)" pkg="reflex_gripper" type="reflex_sf_hand.py"
+     args="--name $(arg Name)"
+     required="true" output="screen"/>
 </launch>

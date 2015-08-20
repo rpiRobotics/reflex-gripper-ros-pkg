@@ -3,6 +3,7 @@ import yaml
 import sys
 import argparse
 import numpy
+import math
 from os.path import join
 
 import rospy
@@ -25,6 +26,7 @@ option version 0.4
 object Gripper
 
 property double[] joint_positions
+property double[] raw_angles
 property double[] joint_velocities
 property double[] joint_torques
 
@@ -34,14 +36,14 @@ function void setPositionModeSpeed(double speed)
 function void calibrate()
 
 #Functions for position mode presets
-#function void closeGrip()
-#function void openGrip()
-#function void tightenGrip()
-#function void loosenGrip()
-#function void tightenFinger(string finger)
-#function void loosenFinger(string finger)
-#function void zeroHand()
-#function void setGripShape(string shape)
+function void setGripShape(string shape)
+function void closeGrip()
+function void openGrip()
+function void tightenGrip()
+function void loosenGrip()
+function void tightenFinger(string finger)
+function void loosenFinger(string finger)
+function void zeroHand()
 
 end object
 """
@@ -65,23 +67,43 @@ class Gripper_impl(object):
 		rospy.Subscriber('/reflex_%s/hand_state'%(name), MSG.Hand, self._joint_state_cb)
 
 		print "Initializing Hand ..."
+		
 		self._joint_positions = [0]*4
+		self._raw_angles = [0]*4
 		self._joint_velocities = [0]*4
 		self._joint_torques = [0]*4
 		self._joint_command = [0]*8
 		self._position_mode_speed = [4.5]*4
+		self._valid_finger_names = {'f1' : 'f1', 
+									'f2' : 'f2',
+									'f3' : 'f3', 
+									'preshape' : 'preshape',
+									'p' : 'preshape'}
+		self._finger_positions = dict(zip(['f1','f2','f3','preshape'], range(0,4)))
 
-		self._FINGER_CLOSED = 4.6
-		self._FINGER_PINCH = 2.5
-		self._PRESHAPE_CYLINDER = 0
-		self._PRESHAPE_SPHERICAL = 1.5
-		self._PRESHAPE_PINCH = 2.5
+		_30_DEG = math.radians(30)
+		_45_DEG = math.radians(45)
+		_60_DEG = math.radians(60)
+		_90_DEG = math.radians(90)
+		_120_DEG = math.radians(120)
+		_135_DEG = math.radians(135)
+		_180_DEG = math.radians(180)
+		
+		self._PINCH_GRIP = [_90_DEG,_90_DEG, 0.0, _90_DEG]
+		self._CYLINDER_GRIP = [0.0, 0.0, 0.0, 0.0]
+		self._SPHERICAL_GRIP = [_60_DEG,_60_DEG,_60_DEG,_60_DEG]
+		
+		self._CYLINDER_CLOSED = [_180_DEG, _180_DEG, _180_DEG, 0.0]
+		self._PINCH_CLOSED = [_120_DEG,_120_DEG, 0.0, _90_DEG]
+		self._SPHERICAL_CLOSED = [_120_DEG, _120_DEG, _135_DEG, _60_DEG]
+		
 		self._valid_shape_names = {'cylinder' : 'cylinder',
 									'c' : 'cylinder',
 									'sphere' : 'sphere',
 									's' : 'sphere',
 									'pinch' : 'pinch',
 									'p' : 'pinch'}
+		self._grip_shape = 'cylinder'
 
 		self._MODE_DEFAULT  = 0
 		self._MODE_POSITION = 1
@@ -96,6 +118,10 @@ class Gripper_impl(object):
 	@property
 	def joint_positions(self):
 	    return self._joint_positions
+
+	@property
+	def raw_angles(self):
+	    return self._raw_angles
 	
 	@property
 	def joint_velocities(self):
@@ -161,75 +187,81 @@ class Gripper_impl(object):
 		self._position_mode_speed=[speed]*4
 
 
-	# def closeGrip(self):
-	# 	if self._joint_command[3] == self._PRESHAPE_CYLINDER:
-	# 		self._joint_command[0:3] = [self._FINGER_CLOSED]*3
-		
-	# 	elif self._joint_command[3] == self._PRESHAPE_SPHERICAL:
-	# 		self._joint_command[0:3] = [self._FINGER_PINCH]*3
-		
-	# 	elif self._joint_command[3] == self._PRESHAPE_PINCH:
-	# 		self._joint_command[0:2] = [self._FINGER_PINCH]*2
-		
-	# 	self.pub.publish(*self._joint_command)
-	# 	return
+	def setGripShape(self, shape):
+		if self._check_pos_mode():
+			shape = shape.lower()
+			if not shape in self._valid_shape_names.keys():
+				raise RuntimeError("Not a valid grip shape")
+				return
+			
+			if self._valid_shape_names[shape] == 'cylinder':
+				self.setJointCommand(self._CYLINDER_GRIP)
+			elif self._valid_shape_names[shape] == 'sphere':
+				self.setJointCommand(self._SPHERICAL_GRIP)
+			elif self._valid_shape_names[shape] == 'pinch':
+				self.setJointCommand(self._PINCH_GRIP)
+			
+			self._grip_shape = self._valid_shape_names[shape]
+	
+	def closeGrip(self):
+		if self._check_pos_mode():
+			if self._grip_shape == 'cylinder':
+				self.setJointCommand(self._CYLINDER_CLOSED)
+			elif self._grip_shape == 'sphere':
+				self.setJointCommand(self._SPHERICAL_CLOSED)
+			elif self._grip_shape == 'pinch':
+				self.setJointCommand(self._PINCH_CLOSED)
 
-	# def openGrip(self):
-	# 	self._joint_command[0:3] = [0]*3
-	# 	self.pub.publish(*self._joint_command)
-	# 	return
+	def openGrip(self):
+		if self._check_pos_mode():
+			self.setGripShape(self._grip_shape)
 
-	# def tightenGrip(self):
-	# 	for motor in self.gripper.motors:
-	# 		if 'preshape' in motor:
-	# 			continue
-	# 		self.gripper.motors[motor].tighten()
-	# 	return
+	def tightenGrip(self):
+		if self._check_pos_mode():
+			command = [0]*4
+			# only tighten fingers, not preshape
+			for i in range(0,3):
+				command[i] = self._joint_positions[i] + 0.05
+			command[3] = self._joint_positions[3]
+			self.setJointCommand(command)
 
-	# def loosenGrip(self):
-	# 	for motor in self.gripper.motors:
-	# 		if 'preshape' in motor:
-	# 			continue
-	# 		self.gripper.motors[motor].loosen()
-	# 	return
+	def loosenGrip(self):
+		if self._check_pos_mode():
+			command = [0]*4
+			# only loosen fingers, not preshape
+			for i in range(0,3):
+				command[i] = self._joint_positions[i] - 0.05
+			command[3] = self._joint_positions[3]
+			self.setJointCommand(command)			
 
-	# def tightenFinger(self, finger):
-	# 	if finger.lower() not in self.gripper.fingers:
-	# 		raise RuntimeError("'%s' is not a valid finger"%finger)
-	# 		return
-	# 	else:
-	# 		fingerMotor = '/gripper_%s_%s'%(self.gripper.name, finger.lower())
-	# 		self.gripper.motors[fingerMotor].tighten()
-	# 		return
+	def tightenFinger(self, finger):
+		if self._check_pos_mode():
+			finger = finger.lower()
+			if not finger in self._valid_finger_names.keys():
+				raise RuntimeError("'%s' is not a valid finger"%finger)
+				return
+			else:
+				finger = self._valid_finger_names[finger]
+				command = self._joint_positions
+				command[self._finger_positions[finger]] += 0.05
+				self.setJointCommand(command)
 
-	# def loosenFinger(self, finger):
-	# 	if finger.lower() not in self.gripper.fingers:
-	# 		raise RuntimeError("'%s' is not a valid finger"%finger)
-	# 		return
-	# 	else:
-	# 		fingerMotor = '/gripper_%s_%s'%(self.gripper.name, finger.lower())
-	# 		self.gripper.motors[fingerMotor].loosen()
-
-
-	# def setGripShape(self, shape):
-	# 	shape = shape.lower()
-	# 	if not shape in self._valid_shape_names.keys():
-	# 		return
-
-	# 	if self._valid_shape_names[shape] == 'cylinder':
-	# 		self._joint_command[3] = self._PRESHAPE_CYLINDER
-	# 	elif self._valid_shape_names[shape] == 'sphere':
-	# 		self._joint_command[3] = self._PRESHAPE_SPHERICAL
-	# 	elif self._valid_shape_names[shape] == 'pinch':
-	# 		self._joint_command[3] = self._PRESHAPE_PINCH
-
-	# 	self.pub.publish(*self._joint_command)
-	# 	return
+	def loosenFinger(self, finger):
+		if self._check_pos_mode():
+			finger = finger.lower()
+			if not finger in self._valid_finger_names.keys():
+				raise RuntimeError("'%s' is not a valid finger"%finger)
+				return
+			else:
+				finger = self._valid_finger_names[finger]
+				command = self._joint_positions
+				command[self._finger_positions[finger]] -= 0.05
+				self.setJointCommand(command)
 
 	def zeroHand(self):
 		self.setControlMode(self._MODE_POSITION)
 		self.setJointCommand([0]*4)
-		return
+		self._grip_shape = 'cylinder'
 
 	def calibrate(self):
 		self.zeroHand()
@@ -245,6 +277,10 @@ class Gripper_impl(object):
 		for i in range(0,4):
 			self._joint_positions[i] = data.motor[i].joint_angle
 
+	def readRawAngles(self,data):
+		for i in range(0,4):
+			self._raw_angles[i] = data.motor[i].raw_angle
+
 	def readJointVelocities(self,data):
 		for i in range(0,4):
 			self._joint_velocities[i] = data.motor[i].velocity
@@ -255,9 +291,16 @@ class Gripper_impl(object):
 
 	def _joint_state_cb(self,data):
 		self.readJointPositions(data)
+		self.readRawAngles(data)
 		self.readJointVelocities(data)
 		self.readJointTorques(data)
 
+	def _check_pos_mode(self):
+		if self._mode != self._MODE_POSITION:
+			raise RuntimeError("Must be in position mode to use this funciton")
+			return False
+		else:
+			return True
 
 def main(argv):
 	print "REFLEX GRIPPER RR BRIDGE"

@@ -46,6 +46,9 @@ class Motor(object):
     def get_load(self):
         return self._motor_msg.load
 
+    def get_velocity(self):
+        return self._motor_msg.velocity
+
     def get_motor_msg(self):
         return self._motor_msg
 

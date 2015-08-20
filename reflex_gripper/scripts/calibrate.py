@@ -15,7 +15,7 @@ if __name__ == "__main__":
 	
 	if '/reflex_%s'%name in rosnode.get_node_names():
 		print "If you do not see the script running in this window, "
-				print "please check the window that the hand service is running in."
+		print "please check the window that the hand service is running in."
 		rospy.wait_for_service('reflex_%s/zero_fingers'%name, 5)
 		service = rospy.ServiceProxy('/reflex_%s/zero_fingers'%name, Empty)
 		service()

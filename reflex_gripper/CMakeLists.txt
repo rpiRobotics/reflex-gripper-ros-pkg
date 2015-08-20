@@ -30,3 +30,15 @@ add_executable(tf_broadcaster src/tf_broadcaster.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(tf_broadcaster ${catkin_LIBRARIES})
+
+install(
+  DIRECTORY scripts/
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  USE_SOURCE_PERMISSIONS
+)
+
+install(
+  DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  USE_SOURCE_PERMISSIONS
+)

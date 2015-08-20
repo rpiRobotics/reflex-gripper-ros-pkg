@@ -3,7 +3,7 @@
 	<name>reflex_gripper_msgs</name>
 	<version>1.0.0</version>
 	<description>Messages used for data passage in the Reflex system </description>
-	<maintainer email="grebeg@rpi.edu">Gregory Grebe</maintainer>
+	<maintainer email="gsgrebe@gmail.com">Gregory Grebe</maintainer>
 	<license>TODO</license>
 	<url type="repository">http://github.com/rpiRobotics/reflex-gripper-ros-pkg</url>
 

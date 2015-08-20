@@ -52,6 +52,7 @@ class ReflexHand(object):
                          MSG.VelocityCommand, self._receive_vel_cmd_cb)
         rospy.Subscriber(self.namespace + '/command_motor_force',
                          MSG.ForceCommand, self._receive_force_cmd_cb)
+        
         rospy.loginfo('ReFlex hand \'%s\' has started, waiting for commands...'%name)
 
     def _receive_cmd_cb(self, data):
@@ -64,6 +65,9 @@ class ReflexHand(object):
         raise NotImplementedError
 
     def _receive_force_cmd_cb(self, data):
+        raise NotImplementedError
+
+    def _receive_set_speeds_cb(self,data):
         raise NotImplementedError
 
     def set_angles(self, pose):

@@ -35,6 +35,10 @@ from std_srvs.srv import Empty
 from reflex_hand import ReflexHand
 from reflex_sf_motor import ReflexSFMotor
 import reflex_gripper_msgs.msg as MSG
+from reflex_gripper_msgs.srv import SetSpeed
+
+import thread
+import threading
 
 class ReflexSFHand(ReflexHand):
 	def __init__(self,name):
@@ -44,6 +48,18 @@ class ReflexSFHand(ReflexHand):
 											  MSG.Hand, queue_size=10)
 		rospy.Service(self.namespace + '/zero_fingers', Empty, self.calibrate)
 		rospy.Service(self.namespace + '/zero_fingersI', Empty, self.calibrateI)
+		rospy.Service(self.namespace + '/set_speeds', SetSpeed, self._set_speeds_cb)
+		
+		self._running = True
+		self._t_pub = threading.Thread(target=self._pub_worker)
+		self._t_pub.daemon = True
+		self._t_pub.start()
+
+	def close(self):
+		self._running = False
+		self._t_pub.join()
+		self.disable_torque()
+
 
 	def _receive_cmd_cb(self, data):
 		self.disable_force_control()
@@ -65,6 +81,12 @@ class ReflexSFHand(ReflexHand):
 		self.set_force_cmds(data)
 		self.enable_force_control()
 
+	def _set_speeds_cb(self,data):
+		self.disable_force_control()
+		self.set_speeds(data)
+		return []
+		
+
 	def disable_torque(self):
 		for ID, motor in self.motors.items():
 			motor.disable_torque()
@@ -79,6 +101,13 @@ class ReflexSFHand(ReflexHand):
 		for i in range(4):
 			state.motor[i] = self.motors[self.namespace + motor_names[i]].get_motor_msg()
 		self.hand_state_pub.publish(state)
+
+	def _pub_worker(self):
+		r = rospy.Rate(20)
+		while self._running:
+			self._publish_hand_state()
+			r.sleep()
+
 
 	def calibrate(self, data=None):
 		for motor in sorted(self.motors):
@@ -147,11 +176,8 @@ def main(argv):
 
 	rospy.sleep(2.0)  # To allow services and parameters to load
 	hand = ReflexSFHand(name)
-	rospy.on_shutdown(hand.disable_torque)
-	r = rospy.Rate(20)
-	while not rospy.is_shutdown():
-		hand._publish_hand_state()
-		r.sleep()
+	rospy.on_shutdown(hand.close)
+	rospy.spin()
 
 
 if __name__ == '__main__':

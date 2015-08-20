@@ -11,6 +11,11 @@ import sys
 
 progName = os.path.basename(__file__)
 
+class RRAction(argparse.Action):
+	"""docstring for RRAction"""
+	def __call__(self, parser, namespace, values, option_string=None):
+		setattr(namespace, self.dest, True)
+		setattr(namespace, 'RRPort', values)
 def main(argv):
 	
 	# Parse the command line arguments 
@@ -32,8 +37,10 @@ def main(argv):
 	script_group_hand.add_argument('--bkgOnly', action='store_true', 
 		help='Set up all the required background nodes but ' +\
 		'not the main gripper node')
-	script_group_hand.add_argument('--RRService', action='store_true',
+	script_group_hand.add_argument('--RRService', nargs='?', 
+		default=0, action=RRAction,
 		help='Start the main gripper node as a Robot Raconteur Service.' +\
+		'The optional argument is the RR Port number. ' +\
 		'Note: you must have the reflex_gripper_rr_bridge package installed.')
 	
 	script_group_cal = script_group.add_mutually_exclusive_group()
@@ -57,6 +64,7 @@ def main(argv):
 
 	bkgOnly = args.bkgOnly
 	RRService = args.RRService
+	RRPort = args.RRPort
 
 	names = args.name
 	ports = args.port
@@ -111,7 +119,7 @@ def main(argv):
 	print "--------------------------------------------"
 	# Start the whole hand or just the fingers?
 	# If only background (finger) nodes should be started
-	if bkgOnly or RRService:
+	if bkgOnly:
 		print "Starting the services for the fingers..."
 		print "(Each process will open a new window)"
 		full_command=[]
@@ -134,27 +142,9 @@ def main(argv):
 
 	print "--------------------------------------------"
 
-	# if RRService specified try starting the RR Service
-	if RRService:
-		try:
-			RRpkg = rospack.get_path('reflex_gripper_rr_bridge')
-			
-			print "Starting RR Services for each hand..."
-			print "(Each process will open a new window)"
-			full_command = []
-			for name in names:
-				full_command += ['--tab', '-e', 'bash -c \"rosrun reflex_gripper_rr_bridge gripper_host.py %s\"' % name]
-			subprocess.call(['gnome-terminal'] + full_command)
-		except rospkg.ResourceNotFound, e:
-			print "Could not find the 'reflex_gripper_rr_bridge' package",
-			"so the RR services will not be started."
-
-		print "--------------------------------------------"
-
-
 	# Make sure the required nodes have successfully launched
 	print "Checking for successful launch of all required nodes..."
-	time.sleep(3)
+	time.sleep(4)
 	found = False
 	for name in names:
 		# check that finger was successfully started
@@ -167,6 +157,22 @@ def main(argv):
 			"nodes were not successfully started. Please try again."
 			return -1       
 	print "--------------------------------------------"
+
+	# if RRService specified try starting the RR Service
+	if RRService:
+		try:
+			RRpkg = rospack.get_path('reflex_gripper_rr_bridge')
+			print "Starting RR Services for each hand..."
+			print "(Each process will open a new window)"
+			full_command = []
+			for name in names:
+				full_command += ['--tab', '-e', 'bash -c \"rosrun reflex_gripper_rr_bridge gripper_host.py %s --port %s\"'%(name,RRPort)]
+			subprocess.call(['gnome-terminal'] + full_command)
+		except rospkg.ResourceNotFound, e:
+			print "Could not find the 'reflex_gripper_rr_bridge' package",
+			"so the RR services will not be started."
+
+		print "--------------------------------------------"
 	
 	# Calibrate the fingers
 	if not nocalibrate:
@@ -197,9 +203,6 @@ def main(argv):
 		
 		if calibrate or calibrateI:
 			print "Starting Calibration script..."
-			if not bkgOnly:
-				print "If you do not see the script running in this window, "
-				print "please check the window that the hand service is running in."
 			for name in names:
 				if calibrate:
 					subprocess.call('rosrun reflex_gripper calibrate.py ' + name, shell=True)
@@ -210,7 +213,7 @@ def main(argv):
 			print "Calibration Finished"
 			print "--------------------------------------------"
 
-	raw_input("Setup for all hands is complete.\nPress enter to exit the launch script")
+	print "Setup for all hands is complete.\nExiting the launch script"
 	
 if __name__=="__main__":
 	main(sys.argv[1:])
